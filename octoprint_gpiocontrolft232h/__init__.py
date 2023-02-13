@@ -42,19 +42,7 @@ class GpioControlPlugin(
         )
 
     def get_settings_defaults(self):
-        return dict(gpio_configurations=[],
-                    pin1="D4",
-                    pin2="D5",
-                    pin3="D6",
-                    pin4="D7",
-                    pin5="C0",
-                    pin6="C1",
-                    pin7="C2",
-                    pin8="C3",
-                    pin9="C4",
-                    pin10="C5",
-                    pin11="C6",
-                    pin12="C7")
+        return dict(gpio_configurations=[])
 
     def on_settings_save(self, data):
         for configuration in self._settings.get(["gpio_configurations"]):
@@ -71,7 +59,6 @@ class GpioControlPlugin(
 
             if pin > 0:
                 self.pinout.deinit()
-#               GPIO.cleanup(pin)
 
         octoprint.plugin.SettingsPlugin.on_settings_save(self, data)
 
@@ -245,8 +232,7 @@ class GpioControlPlugin(
             )
         )
 
-    PIN_MAPPINGS1 = [-1, "-1", "D4", "D5", "D6", "D7", "C0", "C1", "C2", "C3", "C4", "C5", "C6", "C7"]
-    PIN_MAPPINGS = list(map(int, PIN_MAPPINGS1))
+    PIN_MAPPINGS = ["-1", "-1", "D4", "D5", "D6", "D7", "C0", "C1", "C2", "C3", "C4", "C5", "C6", "C7"]
 
     def get_pin_number(self, pin):
         if self.mode is None:
