@@ -56,7 +56,7 @@ class GpioControlPlugin(
                 )
             )
 
-            bpin = self.get_pin_number(int(configuration["pin"]))
+            bpin = self.get_pin_number(int(configuration["bpin"]))
 
             if bpin > 0:
                 self.pinout.deinit()
@@ -74,7 +74,7 @@ class GpioControlPlugin(
                 )
             )
 
-            bpin = self.get_pin_number(int(configuration["pin"]))
+            bpin = self.get_pin_number(int(configuration["bpin"]))
 
             if bpin > 0:
                 self.pinout = digitalio.DigitalInOut(getattr(board, self.get_settings_get(["bpin"])))
@@ -117,7 +117,7 @@ class GpioControlPlugin(
                 )
             )
 
-            bpin = self.get_pin_number(int(configuration["pin"]))
+            bpin = self.get_pin_number(int(configuration["bpin"]))
 
             if bpin != -1:
                 self.pinout = digitalio.DigitalInOut(getattr(board, self._settings.get(["light_pin"])))
@@ -156,7 +156,7 @@ class GpioControlPlugin(
             return flask.make_response("Insufficient rights", 403)
 
         configuration = self._settings.get(["gpio_configurations"])[int(data["id"])]
-        bpin = self.get_pin_number(int(configuration["pin"]))
+        bpin = self.get_pin_number(int(configuration["bpin"]))
 
         if command == "getGpioState":
             if bpin < 0:
@@ -198,7 +198,7 @@ class GpioControlPlugin(
         states = []
 
         for configuration in self._settings.get(["gpio_configurations"]):
-            bpin = self.get_pin_number(int(configuration["pin"]))
+            bpin = self.get_pin_number(int(configuration["bpin"]))
 
             if bpin < 0:
                 states.append("")
