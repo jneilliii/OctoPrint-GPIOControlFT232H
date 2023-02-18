@@ -4,7 +4,6 @@ from octoprint.server import user_permission
 
 import octoprint.plugin
 import flask
-import os
 import board
 import digitalio
 
@@ -19,14 +18,10 @@ class GpioControlPlugin(
 ):
 
     def __init__(self):
-        self.board = None
-        self.PIN_MAPPINGS = None
-        self.pinin = None
-        self.pinout = None
-        self.mode = None
+        pass
 
     def on_startup(self, *args, **kwargs):
-        self.mode = None
+        pass
 
     def get_template_configs(self):
         return [
@@ -46,78 +41,54 @@ class GpioControlPlugin(
         )
 
     def get_settings_defaults(self):
-        return dict(gpio_configurations=[],
-                    outpin=["C6"],
-                    inpin="C7")
-
-    def get_pin_number(self, pin):
-        self.PIN_MAPPINGS = {4: "D4", 5: "D5", 6: "D6", 7: "D7", 8: "C0", 9: "C1", 10: "C2", 11: "C3", 12: "C4", 13: "C5", 14: "C6", 15: "C7"}
-        if self.mode is None:
-            return self.PIN_MAPPINGS[pin]
-
-        return -1
+        return {"gpio_configurations": []}
 
     def on_settings_save(self, data):
         for configuration in self._settings.get(["gpio_configurations"]):
-            self._logger.info(
-                "Cleaned GPIO{}: {},{} ({})".format(
-                    configuration["pin"],
-                    configuration["active_mode"],
-                    configuration["default_state"],
-                    configuration["name"],
-                )
-            )
-            pin = self.get_pin_number(str(configuration["pin"]))
+            pin = configuration["pin"]
 
-            if pin > 0:
-                self.mode = None
-#               GPIO.cleanup(pin)
+            if pin != "":
+                processing_pin = digitalio.DigitalInOut(getattr(board, pin))
+                processing_pin.direction = digitalio.Direction.OUTPUT
+                processing_pin.deinit()
+                self._logger.info(
+                    "Cleaned GPIO{}: {},{} ({})".format(
+                        configuration["pin"],
+                        configuration["active_mode"],
+                        configuration["default_state"],
+                        configuration["name"],
+                    )
+                )
 
         octoprint.plugin.SettingsPlugin.on_settings_save(self, data)
 
         for configuration in self._settings.get(["gpio_configurations"]):
-            self._logger.info(
-                "Reconfigured GPIO{}: {},{} ({})".format(
-                    configuration["pin"],
-                    configuration["active_mode"],
-                    configuration["default_state"],
-                    configuration["name"],
+            pin = configuration["pin"]
+
+            if pin != "":
+                self._logger.info(
+                    "Reconfigured GPIO{}: {},{} ({})".format(
+                        configuration["pin"],
+                        configuration["active_mode"],
+                        configuration["default_state"],
+                        configuration["name"],
+                    )
                 )
-            )
-
-            pin = pin = configuration["pin"]
-
-            if pin > 0:
-                self.pinout = digitalio.DigitalInOut(getattr(board, self.get_pin_number(["pin"])))
-                self.pinout.direction = digitalio.Direction.OUTPUT
-#               GPIO.setup(pin, GPIO.OUT)
+                processing_pin = digitalio.DigitalInOut(getattr(board, pin))
+                processing_pin.direction = digitalio.Direction.OUTPUT
 
                 if configuration["active_mode"] == "active_low":
                     if configuration["default_state"] == "default_on":
-                        self.pinout = digitalio.DigitalInOut(getattr(board, self.get_pin_number(["pin"])))
-                        self.pinout.direction = digitalio.Direction.OUTPUT
-                        self.pinout.value = False
-#                       GPIO.output(pin, GPIO.LOW)
+                        processing_pin.value = False
                     elif configuration["default_state"] == "default_off":
-                        self.pinout = digitalio.DigitalInOut(getattr(board, self.get_pin_number(["pin"])))
-                        self.pinout.direction = digitalio.Direction.OUTPUT
-                        self.pinout.value = True
-#                       GPIO.output(pin, GPIO.HIGH)
+                        processing_pin.value = True
                 elif configuration["active_mode"] == "active_high":
                     if configuration["default_state"] == "default_on":
-                        self.pinout = digitalio.DigitalInOut(getattr(board, self.get_pin_number(["pin"])))
-                        self.pinout.direction = digitalio.Direction.OUTPUT
-                        self.pinout.value = True
-#                       GPIO.output(pin, GPIO.HIGH)
+                        processing_pin.value = True
                     elif configuration["default_state"] == "default_off":
-                        self.pinout = digitalio.DigitalInOut(getattr(board, self.get_pin_number(["pin"])))
-                        self.pinout.direction = digitalio.Direction.OUTPUT
-                        self.pinout.value = False
-#                       GPIO.output(pin, GPIO.LOW)
+                        processing_pin.value = False
 
     def on_after_startup(self):
-        self.pinin = digitalio.DigitalInOut(getattr(board, self.get_pin_number(["pin"])))
-        self.pinin.direction = digitalio.Direction.INPUT
         for configuration in self._settings.get(["gpio_configurations"]):
             self._logger.info(
                 "Configured GPIO{}: {},{} ({})".format(
@@ -128,95 +99,72 @@ class GpioControlPlugin(
                 )
             )
 
-            pin = self.get_pin_number(int(configuration["pin"]))
+            pin = configuration["pin"]
 
-            if pin != -1:
-                self.pinout = digitalio.DigitalInOut(getattr(board, self.get_pin_number(["pin"])))
-                self.pinout.direction = digitalio.Direction.OUTPUT
-#               GPIO.setup(pin, GPIO.OUT)
-
+            if pin != "":
+                processing_pin = digitalio.DigitalInOut(getattr(board, pin))
+                processing_pin.direction = digitalio.Direction.OUTPUT
                 if configuration["active_mode"] == "active_low":
                     if configuration["default_state"] == "default_on":
-                        self.pinout = digitalio.DigitalInOut(getattr(board, self.get_pin_number(["pin"])))
-                        self.pinout.direction = digitalio.Direction.OUTPUT
-                        self.pinout.value = False
-#                       GPIO.output(pin, GPIO.LOW)
+                        processing_pin.value = False
                     elif configuration["default_state"] == "default_off":
-                        self.pinout = digitalio.DigitalInOut(getattr(board, self.get_pin_number(["pin"])))
-                        self.pinout.direction = digitalio.Direction.OUTPUT
-                        self.pinout.value = True
-#                       GPIO.output(pin, GPIO.HIGH)
+                        processing_pin.value = True
                 elif configuration["active_mode"] == "active_high":
                     if configuration["default_state"] == "default_on":
-                        self.pinout = digitalio.DigitalInOut(getattr(board, self.get_pin_number(["pin"])))
-                        self.pinout.direction = digitalio.Direction.OUTPUT
-                        self.pinout.value = True
-#                       GPIO.output(pin, GPIO.HIGH)
+                        processing_pin.value = True
                     elif configuration["default_state"] == "default_off":
-                        self.pinout = digitalio.DigitalInOut(getattr(board, self.get_pin_number(["pin"])))
-                        self.pinout.direction = digitalio.Direction.OUTPUT
-                        self.pinout.value = False
-#                       GPIO.output(pin, GPIO.LOW)
+                        processing_pin.value = False
 
     def get_api_commands(self):
         return dict(turnGpioOn=["id"], turnGpioOff=["id"], getGpioState=["id"])
 
     def on_api_command(self, command, data):
-
         if not user_permission.can():
             return flask.make_response("Insufficient rights", 403)
 
         configuration = self._settings.get(["gpio_configurations"])[int(data["id"])]
-        pin = self.get_pin_number(int(configuration["pin"]))
+        processing_pin = None
+        pin = configuration["pin"]
 
-        if command == "getGpioState":
-            if pin < 0:
-                return flask.jsonify("")
-            elif configuration["active_mode"] == "active_low":
-                return flask.jsonify("off" if self.pinin.value is False else "on")
+        if pin != "":
+            processing_pin = digitalio.DigitalInOut(getattr(board, pin))
+            processing_pin.direction = digitalio.Direction.OUTPUT
+
+        if command == "getGpioState" and processing_pin:
+            if configuration["active_mode"] == "active_low":
+                return flask.jsonify("off" if processing_pin.value is False else "on")
             elif configuration["active_mode"] == "active_high":
-                return flask.jsonify("on" if self.pinin.value is False else "off")
-        elif command == "turnGpioOn":
-            if pin > 0:
-                self._logger.info("Turned on GPIO{}".format(configuration["pin"]))
+                return flask.jsonify("on" if processing_pin.value is False else "off")
+        elif command == "turnGpioOn" and processing_pin:
+            self._logger.info("Turned on GPIO{}".format(configuration["pin"]))
 
-                if configuration["active_mode"] == "active_low":
-                    self.pinout = digitalio.DigitalInOut(getattr(board, self.get_pin_number(["pin"])))
-                    self.pinout.direction = digitalio.Direction.OUTPUT
-                    self.pinout.value = False
-#                   GPIO.output(pin, GPIO.LOW)
-                elif configuration["active_mode"] == "active_high":
-                    self.pinout = digitalio.DigitalInOut(getattr(board, self.get_pin_number(["pin"])))
-                    self.pinout.direction = digitalio.Direction.OUTPUT
-                    self.pinout.value = True
-#                   GPIO.output(pin, GPIO.HIGH)
-        elif command == "turnGpioOff":
-            if pin > 0:
-                self._logger.info("Turned off GPIO{}".format(configuration["pin"]))
+            if configuration["active_mode"] == "active_low":
+                processing_pin.value = False
+            elif configuration["active_mode"] == "active_high":
+                processing_pin.value = True
+        elif command == "turnGpioOff" and processing_pin:
+            self._logger.info("Turned off GPIO{}".format(configuration["pin"]))
 
-                if configuration["active_mode"] == "active_low":
-                    self.pinout = digitalio.DigitalInOut(getattr(board, self.get_pin_number(["pin"])))
-                    self.pinout.direction = digitalio.Direction.OUTPUT
-                    self.pinout.value = True
-#                   GPIO.output(pin, GPIO.HIGH)
-                elif configuration["active_mode"] == "active_high":
-                    self.pinout = digitalio.DigitalInOut(getattr(board, self.get_pin_number(["pin"])))
-                    self.pinout.direction = digitalio.Direction.OUTPUT
-                    self.pinout.value = False
-#                   GPIO.output(pin, GPIO.LOW)
+            if configuration["active_mode"] == "active_low":
+                processing_pin.value = True
+            elif configuration["active_mode"] == "active_high":
+                processing_pin.value = False
 
     def on_api_get(self, request):
         states = []
 
         for configuration in self._settings.get(["gpio_configurations"]):
-            pin = self.get_pin_number(int(configuration["pin"]))
+            pin = configuration["pin"]
 
-            if pin < 0:
+            if pin == "":
                 states.append("")
-            elif configuration["active_mode"] == "active_low":
-                states.append("off" if self.pinin.value is False else "on")
-            elif configuration["active_mode"] == "active_high":
-                states.append("on" if self.pinin.value is False else "off")
+            else:
+                processing_pin = digitalio.DigitalInOut(getattr(board, pin))
+                processing_pin.direction = digitalio.Direction.OUTPUT
+                if configuration["active_mode"] == "active_low":
+                    states.append("off" if processing_pin.value is False else "on")
+                elif configuration["active_mode"] == "active_high":
+                    states.append("on" if processing_pin.value is False else "off")
 
         return flask.jsonify(states)
 
